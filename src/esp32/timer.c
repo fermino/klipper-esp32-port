@@ -35,13 +35,20 @@
 static void timer_set_ccompare(uint32_t next);
 
 /**
- * Timer's ISR.
- * Dispatchs klipper's timers.
+ * Timer's ISR: dispatchs Klipper timers.
+ *
+ * We need to "fence" the interrupt by disabling the interrupt source, as
+ * timer_dispatch_many() assumes global control of interrupts and might
+ * lower the interrupt mask even when we're still inside the ISR context.
  */
 static void IRAM_ATTR timer_isr()
 {
+    esp_intr_disable_source(TIMER_CCOMP_INTR_NO);
+
     uint32_t next = timer_dispatch_many();
     timer_set_ccompare(next);
+
+    esp_intr_enable_source(TIMER_CCOMP_INTR_NO);
 }
 
 /**
