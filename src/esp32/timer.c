@@ -1,5 +1,6 @@
 #include "timer.h"
 #include "command.h"
+#include "generic/misc.h"
 #include "esp_attr.h"
 #include "esp_cpu.h"
 #include "esp_intr_alloc.h"
@@ -60,7 +61,7 @@ static void IRAM_ATTR timer_isr()
 void timer_init()
 {
     // Disable interrupt in case it's enabled
-    ESP_INTR_DISABLE(TIMER_CCOMP_INTR_NO);
+    esp_intr_disable_source(TIMER_CCOMP_INTR_NO);
 
     /**
      * Route the interrupt source to the interrupt number and register the ISR.
@@ -78,7 +79,7 @@ void timer_init()
 
     // Kick the timer and enable the interrupt
     timer_kick();
-    ESP_INTR_ENABLE(TIMER_CCOMP_INTR_NO);
+    esp_intr_enable_source(TIMER_CCOMP_INTR_NO);
 }
 DECL_INIT(timer_init);
 
@@ -107,5 +108,5 @@ static void timer_set_ccompare(uint32_t next)
  */
 void timer_kick()
 {
-    timer_set_ccompare(timer_read_time() + (esp_rom_get_cpu_ticks_per_us() * 50ul));
+    timer_set_ccompare(timer_read_time() + timer_from_us(50));
 }
