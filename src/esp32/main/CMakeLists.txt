@@ -5,7 +5,6 @@ set(SOURCES
     # Core
     ${KLIPPER_ROOT}/src/esp32/main.c
     ${KLIPPER_ROOT}/src/esp32/timer.c
-    ${KLIPPER_ROOT}/src/esp32/irq.c
 
     # Host communication
     ${KLIPPER_ROOT}/src/esp32/serial.c
@@ -70,6 +69,10 @@ idf_component_register(
         ${KLIPPER_ROOT}/src/esp32
         ${KLIPPER_ROOT}/src/generic
         ${KLIPPER_ROOT}/out
+        # compile_time_request.c dependencies (because everything inside irq.h is inlined)
+        $ENV{IDF_PATH}/components/xtensa/include
+        $ENV{IDF_PATH}/components/xtensa/${IDF_TARGET}/include
+        ${KLIPPER_ROOT}/src/esp32/build/config
     REQUIRES
         driver
         esp_adc
