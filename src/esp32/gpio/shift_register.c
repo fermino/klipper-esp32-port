@@ -58,7 +58,9 @@ void sr_init()
     spi_ll_set_half_duplex(spi, 0);
     spi_ll_set_sio_mode(spi, 0);
     spi_ll_set_mosi_delay(spi, 0, 0);
+#if SPI_LL_MOSI_FREE_LEVEL
     spi_ll_set_mosi_free_level(spi, false);
+#endif
     spi_ll_set_miso_delay(spi, 2, 0);
     spi_ll_enable_miso(spi, false);
     spi_ll_set_dummy(spi, 0);
