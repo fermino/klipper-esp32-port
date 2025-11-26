@@ -1,37 +1,47 @@
 #include "timer.h"
+#include "autoconf.h"
+#include "sdkconfig.h"
 #include "command.h"
 #include "generic/misc.h"
 #include "esp_attr.h"
 #include "esp_cpu.h"
 #include "esp_intr_alloc.h"
-#include "esp_rom_sys.h"
 #include "board/timer_irq.h"
 #include "xtensa/core-macros.h"
 
+#if !CONFIG_IDF_TARGET_ARCH_XTENSA
+#   error This Klipper timer implementation is for xtensa cores only.
+#endif
+
+#if !CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_240 || CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ != 240 || CONFIG_CLOCK_FREQ != 240000000
+#   error Klipper needs a clock frequency of 240MHz. Check CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ and CONFIG_CLOCK_FREQ.
+#endif
+DECL_CONSTANT("CLOCK_FREQ", CONFIG_CLOCK_FREQ);
+
 /**
- * Klipper's ESP32 timer.
+ * Klipper's ESP32 timer implementation (FOR XTENSA CORES ONLY).
  *
- * This uses the clock cycle counter register (CCOUNT), that is automatically
- * incremented on each clock cycle. One tick is equal to 1s / clock_freq.
+ * This uses the clock cycle counter register (CCOUNT, that automatically
+ * increments on each clock cycle) and the per-core timer interrupts
+ * (CCOMPAREn) to dispatch Klipper timers at the time they're scheduled.
  *
- * It routes and enables an interrupt that triggers each time that CCOUNT is
- * equal to CCOMPAREn. The ISR takes care of dispatching klipper's timers.
+ * One tick is equal to 1s / clock_freq.
  *
- * There are some "magic numbers" defined below. Those come from intr_alloc.c
- * and esp_intr_alloc.h, in particular get_available_int(). I have not been
- * able to find them in any technical document, but it is possible to enable
- * DEBUG_INT_ALLOC_DECISIONS in intr_alloc.c to debug and get them for any
- * other chip compatible with the SDK. If you're porting it to another MCU
- * and it does not work, check this!
+ * The usual flow with ESP-IDF is to use ETS_INTERNAL_*_INTR_SOURCE when
+ * calling esp_intr_alloc(), that in turn calls get_available_int() to get the
+ * proper interrupt number. Given that this is a local (core-bound) interrupt
+ * (and as such does not go through the interrupt matrix), we can skip most of
+ * it.
  *
- * Care must be taken to ensure that no other code messes with this interrupt,
- * as ESP-IDF might want to reallocate it if using the drivers normally. I have
- * not followed it enough, but hey, Here be dragons!
+ * As a side note, when debugging the interrupt assignment process in ESP-IDF
+ * it might be useful to set DEBUG_INT_ALLOC_DECISIONS in intr_alloc.c.
+ *
+ * The interrupt number comes from the section "CPU Interrupt" in the technical
+ * reference manual (8.3.2 for the ESP32/ESP32S2 and 9.3.2 for the ESP32S3).
  */
 
-#define TIMER_CCOMPARE_NO       1
-#define TIMER_CCOMP_INTR_SRC    (ETS_INTERNAL_TIMER1_INTR_SOURCE)
-#define TIMER_CCOMP_INTR_NO     (15)                                // ETS_INTERNAL_TIMER1_INTR_NO
+#define TIMER_CCOMPARE_NO   1       // Needs to be outside parentheses
+#define TIMER_CCOMP_INTR_NO (15)    // ETS_INTERNAL_TIMER1_INTR_NO
 
 static void timer_set_ccompare(uint32_t next);
 
@@ -40,7 +50,8 @@ static void timer_set_ccompare(uint32_t next);
  *
  * We need to "fence" the interrupt by disabling the interrupt source, as
  * timer_dispatch_many() assumes global control of interrupts and might
- * lower the interrupt mask even when we're still inside the ISR context.
+ * lower the interrupt mask even when we're still inside the ISR context
+ * (which would result in an interrupt storm).
  */
 static void IRAM_ATTR timer_isr()
 {
@@ -63,13 +74,6 @@ void timer_init()
     // Disable interrupt in case it's enabled
     esp_intr_disable_source(TIMER_CCOMP_INTR_NO);
 
-    /**
-     * Route the interrupt source to the interrupt number and register the ISR.
-     * The interrupt number is usually handled by get_available_int() in
-     * intr_alloc.c, in this case we'll just hardcode it. Beware this is the
-     * case for the ESP32 only.
-     */
-    esp_rom_route_intr_matrix(0, TIMER_CCOMP_INTR_SRC, TIMER_CCOMP_INTR_NO);
     esp_cpu_intr_set_handler(TIMER_CCOMP_INTR_NO, timer_isr, NULL);
 
     // Sometimes the registers end up in an unsafe state so we'll reset them
