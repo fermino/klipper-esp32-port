@@ -1,3 +1,6 @@
+// Copyright 2025, Fermin Olaiz <ferminolaiz@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-only
+
 #include "timer.h"
 #include "autoconf.h"
 #include "sdkconfig.h"
@@ -8,15 +11,6 @@
 #include "esp_intr_alloc.h"
 #include "board/timer_irq.h"
 #include "xtensa/core-macros.h"
-
-#if !CONFIG_IDF_TARGET_ARCH_XTENSA
-#   error This Klipper timer implementation is for xtensa cores only.
-#endif
-
-#if !CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_240 || CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ != 240 || CONFIG_CLOCK_FREQ != 240000000
-#   error Klipper needs a clock frequency of 240MHz. Check CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ and CONFIG_CLOCK_FREQ.
-#endif
-DECL_CONSTANT("CLOCK_FREQ", CONFIG_CLOCK_FREQ);
 
 /**
  * Klipper's ESP32 timer implementation (FOR XTENSA CORES ONLY).
@@ -40,13 +34,22 @@ DECL_CONSTANT("CLOCK_FREQ", CONFIG_CLOCK_FREQ);
  * reference manual (8.3.2 for the ESP32/ESP32S2 and 9.3.2 for the ESP32S3).
  */
 
+#if !CONFIG_IDF_TARGET_ARCH_XTENSA
+#   error This Klipper timer implementation is for xtensa cores only.
+#endif
+
+#if !CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_240 || CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ != 240 || CONFIG_CLOCK_FREQ != 240000000
+#   error Klipper needs a clock frequency of 240MHz. Check CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ and CONFIG_CLOCK_FREQ.
+#endif
+DECL_CONSTANT("CLOCK_FREQ", CONFIG_CLOCK_FREQ);
+
 #define TIMER_CCOMPARE_NO   1       // Needs to be outside parentheses
 #define TIMER_CCOMP_INTR_NO (15)    // ETS_INTERNAL_TIMER1_INTR_NO
 
 static void timer_set_ccompare(uint32_t next);
 
 /**
- * Timer's ISR: dispatchs Klipper timers.
+ * Timer's ISR: dispatch Klipper timers.
  *
  * We need to "fence" the interrupt by disabling the interrupt source, as
  * timer_dispatch_many() assumes global control of interrupts and might
@@ -71,9 +74,8 @@ static void IRAM_ATTR timer_isr()
  */
 void timer_init()
 {
-    // Disable interrupt in case it's enabled
+    // Disable interrupt in case it's enabled and configure ISR
     esp_intr_disable_source(TIMER_CCOMP_INTR_NO);
-
     esp_cpu_intr_set_handler(TIMER_CCOMP_INTR_NO, timer_isr, NULL);
 
     // Sometimes the registers end up in an unsafe state so we'll reset them
