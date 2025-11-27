@@ -1,5 +1,6 @@
 #include "main.h"
 #include "command.h"
+#include "watchdog.h"
 #include "esp_private/startup_internal.h"
 #include "esp_private/system_internal.h"
 #include "esp_rom_sys.h"
@@ -13,6 +14,9 @@ ESP_SYSTEM_INIT_FN(main_core0, SECONDARY, BIT(0), 1000)
 {
     // Let UART finish sending init buffer's content
     esp_rom_delay_us(500 * 1000);
+
+    // Don't leave wdt initialization up to ctr magic
+    watchdog_init();
 
     sched_main();
     shutdown("Main stopped.");

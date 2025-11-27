@@ -5,6 +5,7 @@ set(SOURCES
     # Core
     ${KLIPPER_ROOT}/src/esp32/main.c
     ${KLIPPER_ROOT}/src/esp32/timer.c
+    ${KLIPPER_ROOT}/src/esp32/watchdog.c
 
     # Host communication
     ${KLIPPER_ROOT}/src/esp32/serial.c
