@@ -3,6 +3,7 @@
 
 #include "watchdog.h"
 #include "command.h"
+#include "irq.h"
 #include "esp_clk_tree.h"
 #include "esp_private/periph_ctrl.h"
 #include "hal/wdt_hal.h"
@@ -72,8 +73,12 @@ void watchdog_init()
  */
 void watchdog_feed()
 {
+    uint32_t flag = irq_save();
+
     wdt_hal_write_protect_disable(&wdt);
     wdt_hal_feed(&wdt);
     wdt_hal_write_protect_enable(&wdt);
+
+    irq_restore(flag);
 }
 DECL_TASK(watchdog_feed);
