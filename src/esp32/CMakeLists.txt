@@ -94,9 +94,9 @@ idf_component_register(
         esp_driver_uart
 
     # Map the whole app to IRAM on startup to avoid possible flash cache misses
-    # that would introduce jitter. You can verify this by by running `idf size`
-    # and making sure IRAM and Flash Code `.text` sections match with the
-    # smallest difference possible (usually around 1KiB).
+    # that would introduce jitter. You can verify this by by running
+    # `idf.py size` and making sure IRAM and Flash Code `.text` sections match
+    # with the smallest difference possible (usually around 1KiB).
     LDFRAGMENTS "${KLIPPER_ROOT}/src/esp32/all_code_to_iram.lf"
 
     # Avoid removing symbols needed later by compile_time_request.c
