@@ -20,21 +20,13 @@ __noreturn ESP_SYSTEM_INIT_FN(main_core0, SECONDARY, BIT(0), 1000)
 
     sched_main();
     shutdown("Main stopped.");
-}
-
-void reset_mcu()
-{
     esp_restart_noos();
 }
-DECL_SHUTDOWN(reset_mcu);
 
-void command_reset(uint32_t* args)
-{
-    reset_mcu();
-}
+void command_reset(uint32_t* args) { esp_restart_noos(); }
 DECL_COMMAND_FLAGS(command_reset, HF_IN_SHUTDOWN, "reset");
 
 /**
  * Placeholder to avoid linker errors
  */
-void app_main() { reset_mcu(); }
+void app_main() { esp_restart_noos(); }
