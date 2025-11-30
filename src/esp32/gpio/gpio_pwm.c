@@ -17,7 +17,7 @@ static ledc_timer_t setup_timer(uint32_t frequency)
 {
     static uint32_t assigned_freqs[LEDC_TIMER_MAX];
 
-    int16_t timer_found = -1;
+    int_fast16_t timer_found = -1;
     for (uint8_t i = 0; i < LEDC_TIMER_MAX; i++) {
         // If the requested frequency is already on a timer
         if (assigned_freqs[i] == frequency) {
