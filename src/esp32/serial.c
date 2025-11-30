@@ -2,17 +2,16 @@
 #include "command.h"
 #include "esp_err.h"
 #include "serial_irq.h"
-#include "esp_intr_types.h"
 #include "driver/uart.h"
 #include "hal/uart_ll.h"
 #include "soc/interrupts.h"
 #include "soc/uart_struct.h"
 
-#define UART_NUM    UART_NUM_2
-#define UART_IRQ    ETS_UART2_INTR_SOURCE
+#define UART_NUM            UART_NUM_2
+#define UART_PERIPH_INTR    ETS_UART2_INTR_SOURCE
+#define UART_CPU_INTR       2 // Is not related to the above, see esp_cpu_intr.c
 
 static uart_dev_t* uart_dev = NULL;
-static intr_handle_t uart_isr_handle = NULL;
 
 /**
  * Interrupt handler for UART.
@@ -86,17 +85,13 @@ void serial_init(void)
     // Set RXFIFO_FULL interrupt threshold to 1 => an interrupt is fired on every RX byte.
     uart_ll_set_rxfifo_full_thr(uart_dev, 1);
 
-    // Allocate interrupt
-    ESP_ERROR_CHECK(esp_intr_alloc(
-        UART_IRQ,
-        ESP_INTR_FLAG_IRAM,
-        uart_isr,
-        NULL,
-        &uart_isr_handle
-    ));
+    // Configure interrupt
+    esp_cpu_intr_set_handler(UART_CPU_INTR, uart_isr, NULL);
+    esp_rom_route_intr_matrix(esp_cpu_get_core_id(), UART_PERIPH_INTR, UART_CPU_INTR);
 
     // Enable RXFIFO_FULL interrupt
     uart_ll_ena_intr_mask(uart_dev, UART_INTR_RXFIFO_FULL);
+    esp_intr_enable_source(UART_CPU_INTR);
 }
 DECL_INIT(serial_init);
 
