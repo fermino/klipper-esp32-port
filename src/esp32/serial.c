@@ -11,7 +11,7 @@
 #define UART_PERIPH_INTR    ETS_UART2_INTR_SOURCE
 #define UART_CPU_INTR       2 // Is not related to the above, see esp_cpu_intr.c
 
-static uart_dev_t* uart_dev = NULL;
+#define UART_DEV            (UART_LL_GET_HW(UART_NUM))
 
 /**
  * Interrupt handler for UART.
@@ -26,16 +26,16 @@ static uart_dev_t* uart_dev = NULL;
  */
 static void IRAM_ATTR uart_isr(void *arg)
 {
-    if ( uart_ll_get_intsts_mask(uart_dev) & UART_INTR_RXFIFO_FULL) {
-        uint32_t length = uart_ll_get_rxfifo_len(uart_dev);
+    if ( uart_ll_get_intsts_mask(UART_DEV) & UART_INTR_RXFIFO_FULL) {
+        uint32_t length = uart_ll_get_rxfifo_len(UART_DEV);
         uint8_t buffer[length];
-        uart_ll_read_rxfifo(uart_dev, buffer, length);
+        uart_ll_read_rxfifo(UART_DEV, buffer, length);
 
         for (uint32_t i = 0; i < length; i++) {
             serial_rx_byte(buffer[i]);
         }
 
-        uart_ll_clr_intsts_mask(uart_dev, UART_INTR_RXFIFO_FULL);
+        uart_ll_clr_intsts_mask(UART_DEV, UART_INTR_RXFIFO_FULL);
     }
 }
 
@@ -50,8 +50,6 @@ static void IRAM_ATTR uart_isr(void *arg)
  */
 void serial_init(void)
 {
-    uart_dev = UART_LL_GET_HW(UART_NUM);
-
     ESP_ERROR_CHECK(uart_param_config(
         UART_NUM,
         &(uart_config_t) {
@@ -72,25 +70,25 @@ void serial_init(void)
     ));
 
     // Clear FIFOs
-    uart_ll_rxfifo_rst(uart_dev);
-    uart_ll_txfifo_rst(uart_dev);
+    uart_ll_rxfifo_rst(UART_DEV);
+    uart_ll_txfifo_rst(UART_DEV);
 
     // Disable interrupt and clear pending status
-    uart_ll_disable_intr_mask(uart_dev, UART_LL_INTR_MASK);
-    uart_ll_clr_intsts_mask(uart_dev, UART_LL_INTR_MASK);
+    uart_ll_disable_intr_mask(UART_DEV, UART_LL_INTR_MASK);
+    uart_ll_clr_intsts_mask(UART_DEV, UART_LL_INTR_MASK);
 
     // Set TX idle time between transfers
-    uart_ll_set_tx_idle_num(uart_dev, 0);
+    uart_ll_set_tx_idle_num(UART_DEV, 0);
 
     // Set RXFIFO_FULL interrupt threshold to 1 => an interrupt is fired on every RX byte.
-    uart_ll_set_rxfifo_full_thr(uart_dev, 1);
+    uart_ll_set_rxfifo_full_thr(UART_DEV, 1);
 
     // Configure interrupt
     esp_cpu_intr_set_handler(UART_CPU_INTR, uart_isr, NULL);
     esp_rom_route_intr_matrix(esp_cpu_get_core_id(), UART_PERIPH_INTR, UART_CPU_INTR);
 
     // Enable RXFIFO_FULL interrupt
-    uart_ll_ena_intr_mask(uart_dev, UART_INTR_RXFIFO_FULL);
+    uart_ll_ena_intr_mask(UART_DEV, UART_INTR_RXFIFO_FULL);
     esp_intr_enable_source(UART_CPU_INTR);
 }
 DECL_INIT(serial_init);
@@ -108,7 +106,7 @@ void serial_enable_tx_irq()
 {
     // @todo 10ms is a bit too much, we should implement some sort of ring buffer
     uint32_t timeout = 10000;
-    while (!uart_ll_is_tx_idle(uart_dev)) {
+    while (!uart_ll_is_tx_idle(UART_DEV)) {
         if (unlikely(timeout == 0)) {
             shutdown("TX transaction took too long.");
             // ReSharper disable once CppDFAUnreachableCode
@@ -120,6 +118,6 @@ void serial_enable_tx_irq()
 
     uint8_t buffer;
     while (!serial_get_tx_byte(&buffer)) {
-        uart_ll_write_txfifo(uart_dev, &buffer, sizeof(buffer));
+        uart_ll_write_txfifo(UART_DEV, &buffer, sizeof(buffer));
     }
 }
