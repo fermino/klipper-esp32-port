@@ -10,7 +10,7 @@
  *
  * [1] https://github.com/fermino/esp-idf-example-no-freertos/blob/main/main/esp-no-freertos.c
  */
-ESP_SYSTEM_INIT_FN(main_core0, SECONDARY, BIT(0), 1000)
+__noreturn ESP_SYSTEM_INIT_FN(main_core0, SECONDARY, BIT(0), 1000)
 {
     // Let UART finish sending init buffer's content
     esp_rom_delay_us(500 * 1000);
