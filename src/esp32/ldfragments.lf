@@ -1,4 +1,0 @@
-[mapping:klipper]
-archive: libmain.a
-entries:
-    * (noflash)
