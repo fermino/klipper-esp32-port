@@ -1,4 +1,0 @@
-[mapping:esp32]
-archive: libesp32.a
-entries:
-    * (noflash)
