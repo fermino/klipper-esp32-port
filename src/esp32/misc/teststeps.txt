@@ -1,11 +1,11 @@
 allocate_oids count=3
 config_stepper oid=0 step_pin=IO10 dir_pin=IO11 invert_step=0 step_pulse_ticks=32
 config_stepper oid=1 step_pin=IO12 dir_pin=IO13 invert_step=0 step_pulse_ticks=32
-config_stepper oid=2 step_pin=SR0 dir_pin=SR1 invert_step=0 step_pulse_ticks=32
+config_stepper oid=2 step_pin=IO10 dir_pin=IO11 invert_step=0 step_pulse_ticks=32
 finalize_config crc=0
 
 SET start_clock {clock+freq}
-SET ticks 1350
+SET ticks 1265
 
 reset_step_clock oid=0 clock={start_clock}
 set_next_step_dir oid=0 dir=0
