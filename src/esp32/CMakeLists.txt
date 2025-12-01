@@ -10,6 +10,8 @@ cmake_minimum_required(VERSION 3.19)
     Relevant docs:
      - https://docs.espressif.com/projects/esp-idf/en/v5.5.1/esp32/api-guides/build-system.html#renaming-main-component
      - https://docs.espressif.com/projects/esp-idf/en/v5.5.1/esp32/api-guides/build-system.html#optional-project-variables
+
+    @todo replace all references to out/ with CMAKE_BINARY_DIR
 ]]
 
 get_filename_component(KLIPPER_ROOT "../.." ABSOLUTE)
@@ -127,7 +129,7 @@ add_custom_command(
     PRE_LINK
     COMMAND
         # Find object files and extract sections
-        ${KLIPPER_ROOT}/scripts/ctr/find_object_files "${KLIPPER_ROOT}/out/build"
+        ${KLIPPER_ROOT}/scripts/ctr/find_object_files "${CMAKE_BINARY_DIR}"
             | ${KLIPPER_ROOT}/scripts/ctr/extract_sections "${CMAKE_OBJCOPY}"
             > "${KLIPPER_ROOT}/out/compile_time_request.txt" &&
         # Generate dictionary and C file
