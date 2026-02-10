@@ -1,9 +1,12 @@
 #include "main.h"
 #include "command.h"
+#include "autoconf.h"
 #include "watchdog.h"
 #include "esp_private/startup_internal.h"
 #include "esp_private/system_internal.h"
 #include "esp_rom_sys.h"
+
+DECL_CONSTANT_STR("MCU", CONFIG_MCU);
 
 /**
  * Hook into ESP secondary init functions to avoid initializing FreeRTOS [1].
