@@ -151,11 +151,13 @@ uint16_t gpio_adc_read(struct gpio_adc gpio)
 /**
  * Cancel a currently running conversion. Waits until the conversion finishes
  * and reads the value so that the FSM goes back to its initial state.
+ * If there's no running conversion, do nothing (as this can be called
+ * from an ongoing-shutdown state).
  */
 void gpio_adc_cancel_sample(struct gpio_adc gpio)
 {
     if (running_conversion_pin == -1) {
-        shutdown("ADC: there is no conversion running.");
+        return;
     }
 
     // Wait until the conversion has finished
