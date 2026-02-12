@@ -21,6 +21,13 @@
 #   error "Klipper's ESP32 ADC implementation does not support RISC-V cores due to clock configuration differences. You're welcome to port it :)"
 #endif
 
+/**
+ * Define the resolution (bitwidth) of the channel readings, and inform Klippy
+ * of what values to expect by defining ADC_MAX using the DECL_CONSTANT macro.
+ */
+#define ADC_BITWIDTH (ADC_BITWIDTH_10)
+DECL_CONSTANT("ADC_MAX", ((1 << ADC_BITWIDTH) - 1));
+
 #define ADC_UNIT_TO_EVENT_ONESHOT_DONE(unit) ((unit) == ADC_UNIT_1 ? ADC_LL_EVENT_ADC1_ONESHOT_DONE : ADC_LL_EVENT_ADC2_ONESHOT_DONE)
 
 /**
@@ -53,17 +60,12 @@ DECL_INIT(adc_init);
  * Set up an ADC pin. ESP-IDF only provides ADC->GPIO mapping tables, so we
  * have to do a reverse lookup to get the ADC unit and channel.
  *
- * Here we also define the resolution (bitwidth) of the channel readings,
- * and inform Klippy of what values to expect by defining ADC_MAX through
- * the DECL_CONSTANT macro.
- *
  * Based on the section 5.5 of the datasheet, a 12dB attenuation should give us
  * a range of around 0-3V.
  *
  * @todo: use ADC calibration
  * @todo DISABLE IRQ (everywhere)
  */
-DECL_CONSTANT("ADC_MAX", 1023);
 struct gpio_adc gpio_adc_setup(uint8_t pin)
 {
     adc_unit_t unit;
@@ -77,7 +79,7 @@ struct gpio_adc gpio_adc_setup(uint8_t pin)
     }
 
     adc_hal[unit].chan_configs[channel].atten = ADC_ATTEN_DB_12;
-    adc_hal[unit].chan_configs[channel].bitwidth = ADC_BITWIDTH_10;
+    adc_hal[unit].chan_configs[channel].bitwidth = ADC_BITWIDTH;
 
     return (struct gpio_adc) {
         .adc_unit = unit,
