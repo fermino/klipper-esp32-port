@@ -22,6 +22,7 @@ idf_component_register(
         ${KLIPPER_ROOT}/src/endstop.c
         ${KLIPPER_ROOT}/src/esp32/gpio/gpio.c
         ${KLIPPER_ROOT}/src/esp32/gpio/gpio_adc.c
+        ${KLIPPER_ROOT}/src/esp32/gpio/gpio_adc_cali.c
         ${KLIPPER_ROOT}/src/esp32/gpio/gpio_in.c
         ${KLIPPER_ROOT}/src/esp32/gpio/gpio_out.c
         ${KLIPPER_ROOT}/src/esp32/gpio/gpio_pwm.c

@@ -1,4 +1,6 @@
 #include "gpio/gpio_adc.h"
+#include "gpio/gpio_adc_cali.h"
+#include "autoconf.h"
 #include "command.h"
 #include "generic/misc.h"
 #include "esp_clk_tree.h"
@@ -22,11 +24,30 @@
 #endif
 
 /**
- * Define the resolution (bitwidth) of the channel readings, and inform Klippy
- * of what values to expect by defining ADC_MAX using the DECL_CONSTANT macro.
+ * The ESP32 ADC comes factory-calibrated, but given most temp. circuits are
+ * based on a voltage divider and there's no direct access to the internal
+ * voltage reference, we need to know both the ADC reference and the external
+ * reference in order to measure temperatures accurately.
+ *
+ * Some boards have zener-based references that vary wildly between
+ * batches [1-4], that can can be eventually replaced by a TL431.
+ *
+ * In all cases, it is best to measure the reference by measuring the voltage
+ * across GND and the ADC input. Make sure to *DISCONNECT THE THERMISTOR* when
+ * measuring so that there's no load (and no voltage drop) across R1 in the
+ * voltage divider.
+ *
+ * The code below tells Klippy about the real world reference for ADC readings.
+ *
+ * [1] https://github.com/makerbase-mks/MKS-TinyBee/issues/19
+ * [2] https://github.com/MarlinFirmware/Marlin/issues/24142
+ * [3] https://github.com/MarlinFirmware/Marlin/issues/27434
+ * [4] https://github.com/MarlinFirmware/Marlin/pull/27755
  */
-#define ADC_BITWIDTH (ADC_BITWIDTH_10)
-DECL_CONSTANT("ADC_MAX", ((1 << ADC_BITWIDTH) - 1));
+#if CONFIG_ADC_REFERENCE_MV <= 0 || CONFIG_ADC_REFERENCE_MV > 3300
+#   error CONFIG_ADC_REFERENCE_MV must be between 0 and 3300 mV
+#endif
+DECL_CONSTANT("ADC_MAX", CONFIG_ADC_REFERENCE_MV);
 
 #define ADC_UNIT_TO_EVENT_ONESHOT_DONE(unit) ((unit) == ADC_UNIT_1 ? ADC_LL_EVENT_ADC1_ONESHOT_DONE : ADC_LL_EVENT_ADC2_ONESHOT_DONE)
 
@@ -53,6 +74,8 @@ void adc_init()
     }
 
     sar_periph_ctrl_adc_oneshot_power_acquire();
+
+    adc_cali_init();
 }
 DECL_INIT(adc_init);
 
@@ -63,7 +86,6 @@ DECL_INIT(adc_init);
  * Based on the section 5.5 of the datasheet, a 12dB attenuation should give us
  * a range of around 0-3V.
  *
- * @todo: use ADC calibration
  * @todo DISABLE IRQ (everywhere)
  */
 struct gpio_adc gpio_adc_setup(uint8_t pin)
@@ -78,7 +100,7 @@ struct gpio_adc gpio_adc_setup(uint8_t pin)
         shutdown("ADC: could not configure pin as analog input");
     }
 
-    adc_hal[unit].chan_configs[channel].atten = ADC_ATTEN_DB_12;
+    adc_hal[unit].chan_configs[channel].atten = ADC_ATTEN;
     adc_hal[unit].chan_configs[channel].bitwidth = ADC_BITWIDTH;
 
     return (struct gpio_adc) {
@@ -147,7 +169,12 @@ uint16_t gpio_adc_read(struct gpio_adc gpio)
     }
 
     running_conversion_pin = -1;
-    return adc_oneshot_ll_get_raw_result(gpio.adc_unit);
+
+    return adc_cali_map(
+        gpio.adc_unit,
+        gpio.adc_channel,
+        adc_oneshot_ll_get_raw_result(gpio.adc_unit)
+    );
 }
 
 /**

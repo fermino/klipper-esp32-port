@@ -2,6 +2,14 @@
 
 #include "hal/adc_types.h"
 
+/**
+ * Define the resolution (bitwidth) and attenuation of ADC readings.
+ * This will be later informed to Klippy through a DECL_CONSTANT macro.
+ */
+#define ADC_BITWIDTH    (ADC_BITWIDTH_10)
+#define ADC_ATTEN       (ADC_ATTEN_DB_12)
+
+
 struct gpio_adc {
     adc_unit_t adc_unit;
     adc_channel_t adc_channel;

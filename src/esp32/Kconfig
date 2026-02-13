@@ -147,4 +147,39 @@ menu "Shift register output configuration"
         default 26
 endmenu
 
+config ADC_REFERENCE_MV
+    int "ADC voltage reference (default: 3300mV)"
+    range 0 3300
+    default 3300
+    help
+        The ESP32 ADC comes factory-calibrated, but given most temp. circuits
+        are based on a voltage divider and there's no direct access to the
+        internal voltage reference, we need to know both the ADC reference and
+        the external reference in order to measure temperatures accurately.
+
+        Some boards have zener-based references that vary wildly between
+        batches [1-4], that can can be eventually replaced by a TL431.
+
+        In all cases, it is best to measure the reference by measuring the
+        voltage across GND and the ADC input. Make sure to *DISCONNECT THE
+        THERMISTOR* when measuring so that there's no load (and no voltage
+        drop) across R1 in the voltage divider.
+
+        [1] https://github.com/makerbase-mks/MKS-TinyBee/issues/19
+        [2] https://github.com/MarlinFirmware/Marlin/issues/24142
+        [3] https://github.com/MarlinFirmware/Marlin/issues/27434
+        [4] https://github.com/MarlinFirmware/Marlin/pull/27755
+
+#config ESP_IDF_LOGGING_ENABLE
+#    depends on LOW_LEVEL_OPTIONS
+#    bool "Enable ESP-IDF logging on UART1"
+#    default n
+#menu "ESP-IDF logging configuration"
+#    depends on ESP_IDF_LOGGING_ENABLE
+#    config ESP_IDF_LOGGING_TX_PIN
+#        int "TX pin (default: GPIO 13)"
+#        range 0 48
+#        default 13
+#endmenu
+
 endif
