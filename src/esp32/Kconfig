@@ -66,55 +66,22 @@ config MCU
 	default "esp32h4" if MACH_esp32h4
 
 config CLOCK_FREQ
-    int "Timer frequency (in Hz)"
-    default 10000000
-    help
-        The frequency of the hardware timer used for scheduling
+    int
+    # Todo: add defaults for other platforms
+    default 240000000 if MACH_esp32
 
-# INTERNAL
-config USB_HAS_CDC
-    bool
-    default y if (MCU = "esp32s3")
-
-# Communication interface
-config USBSERIAL
-    depends on USB_HAS_CDC
-    bool
-    default y
-config SERIAL
-    depends on !USBSERIAL
-    bool
-    default y
-
-choice
-    prompt "Communication interface" if LOW_LEVEL_OPTIONS
-    default ESP32_SERIAL_UART
-
-    config ESP32_SERIAL_UART
-        bool "UART"
-
-    config ESP32_SERIAL_USB_CDC
-        depends on USBSERIAL
-        bool "USB CDC"
-endchoice
-
-# UART Console Configuration
-menu "UART Console Settings"
-    depends on ESP32_SERIAL_UART
-
+menu "Communication interface (UART0)"
+    config SERIAL # Todo add CDC when the time comes
+        bool
+        default y
     config UART_TX_PIN
-        int "UART TX Pin"
+        int "TX pin for UART0 (default: GPIO 1)"
         range 0 48
-        default 14
-        help
-            GPIO pin for UART TX (default: GPIO 1)
-
+        default 1
     config UART_RX_PIN
-        int "UART RX Pin"
+        int "RX pin for UART0 (default: GPIO 3)"
         range 0 48
-        default 12
-        help
-            GPIO pin for UART RX (default: GPIO 3)
+        default 3
 endmenu
 
 config HAVE_GPIO_SR
@@ -122,7 +89,6 @@ config HAVE_GPIO_SR
     default n
 menu "Shift register output configuration"
     depends on HAVE_GPIO_SR
-
     config SR_BYTE_NO
         int "Shift register count (8 bits each)"
         range 1 16
