@@ -50,6 +50,10 @@ static void IRAM_ATTR uart_isr(void *arg)
  */
 void serial_init(void)
 {
+    #if CONFIG_SERIAL_BAUD == 0
+    #   error Invalid baudrate, check CONFIG_SERIAL_BAUD.
+    #endif
+
     ESP_ERROR_CHECK(uart_param_config(
         UART_NUM,
         &(uart_config_t) {
