@@ -2,17 +2,20 @@
 
 #include "gpio/gpio.h"
 #include "autoconf.h"
+#include "command.h"
 #include <stdbool.h>
 #include <stdint.h>
+#include "xtensa/core-macros.h"
+#include "esp_rom_sys.h"
 #include "hal/spi_ll.h"
 
 #if CONFIG_HAVE_GPIO_SR
 
-#define SR_SPI_HOST (SPI2_HOST)
-#define SR_BIT_NO   (CONFIG_SR_BYTE_NO * 8)
+#define SR_SPI_HOST             (SPI2_HOST)
+#define SR_BIT_NO               (CONFIG_SR_BYTE_NO * 8)
+#define SR_MAX_WAIT_FOR_IDLE_US (5)
 
 // @todo Critical section? noirq?
-// @todo check if transfer finished
 static inline void __attribute__((always_inline)) gpio_sr_shift_out()
 {
     extern volatile uint8_t sr_data[CONFIG_SR_BYTE_NO];
@@ -22,8 +25,16 @@ static inline void __attribute__((always_inline)) gpio_sr_shift_out()
     for (uint8_t i = 0; i < CONFIG_SR_BYTE_NO; i++) {
         local_buffer[i] = sr_data[CONFIG_SR_BYTE_NO - 1 - i];
     }
+
+    uint32_t start = XTHAL_GET_CCOUNT();
+    while (HAL_FORCE_READ_U32_REG_FIELD(SPI_LL_GET_HW(SR_SPI_HOST)->cmd, usr)) {
+        if (XTHAL_GET_CCOUNT() - start >= SR_MAX_WAIT_FOR_IDLE_US * esp_rom_get_cpu_ticks_per_us()) {
+            try_shutdown("SPI transaction took too long.");
+            return;
+        }
+    }
+
     spi_ll_write_buffer(SPI_LL_GET_HW(SR_SPI_HOST), local_buffer, SR_BIT_NO);
-    // @todo write byte might be more efficient
     spi_ll_user_start(SPI_LL_GET_HW(SR_SPI_HOST));
 }
 
