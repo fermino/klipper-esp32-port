@@ -63,7 +63,7 @@ static inline bool __attribute__((always_inline)) gpio_sr_read(struct gpio_out g
 {
     extern volatile uint8_t sr_data[CONFIG_SR_BYTE_NO];
 
-    return (bool) sr_data[gpio_sr_byte_index(gpio)] & (1 << gpio_sr_bit_index(gpio));
+    return (bool)(sr_data[gpio_sr_byte_index(gpio)] & (1 << gpio_sr_bit_index(gpio)));
 }
 
 #endif
