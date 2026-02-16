@@ -1,3 +1,4 @@
+#include "board/irq.h"
 #include "autoconf.h"
 #include "command.h"
 #include "esp_err.h"
@@ -14,6 +15,19 @@
 #define UART_DEV            (UART_LL_GET_HW(UART_NUM))
 
 /**
+ * Write data from klipper's buffer into UART's TXFIFO.
+ *
+ * This function *DOES NOT* check that there is enough space in the TXFIFO.
+ */
+static inline __attribute__((always_inline)) void uart_write_tx()
+{
+    uint8_t buffer;
+    while (!serial_get_tx_byte(&buffer)) {
+        uart_ll_write_txfifo(UART_DEV, &buffer, sizeof(buffer));
+    }
+}
+
+/**
  * Interrupt handler for UART.
  *
  * The uart_ll_set_rxfifo_full_thr() is set to 1 so that an interrupt is
@@ -23,10 +37,14 @@
  * There is a possibility of a buffer overflow (when more bytes are
  * received than klipper can handle), but this is already handled by
  * serial_rx_byte().
+ *
+ * Also, if TXFIFO has become empty, try to send more bytes if available.
  */
 static void IRAM_ATTR uart_isr(void *arg)
 {
-    if ( uart_ll_get_intsts_mask(UART_DEV) & UART_INTR_RXFIFO_FULL) {
+    uint32_t current_mask = uart_ll_get_intsts_mask(UART_DEV);
+
+    if (current_mask & UART_INTR_RXFIFO_FULL) {
         uint32_t length = uart_ll_get_rxfifo_len(UART_DEV);
         uint8_t buffer[length];
         uart_ll_read_rxfifo(UART_DEV, buffer, length);
@@ -36,6 +54,11 @@ static void IRAM_ATTR uart_isr(void *arg)
         }
 
         uart_ll_clr_intsts_mask(UART_DEV, UART_INTR_RXFIFO_FULL);
+    }
+
+    if (current_mask & UART_INTR_TX_DONE) {
+        uart_write_tx();
+        uart_ll_clr_intsts_mask(UART_DEV, UART_INTR_TX_DONE);
     }
 }
 
@@ -92,36 +115,25 @@ void serial_init(void)
     esp_rom_route_intr_matrix(esp_cpu_get_core_id(), UART_PERIPH_INTR, UART_CPU_INTR);
 
     // Enable RXFIFO_FULL interrupt
-    uart_ll_ena_intr_mask(UART_DEV, UART_INTR_RXFIFO_FULL);
+    uart_ll_ena_intr_mask(UART_DEV, UART_INTR_RXFIFO_FULL | UART_INTR_TX_DONE);
     esp_intr_enable_source(UART_CPU_INTR);
 }
 DECL_INIT(serial_init);
 
 /**
- * Send data.
+ * Send data out.
  *
- * This function is called by klipper when there's data available to be sent.
- * There's a busy-waiting safeguard to make sure that the whole TX FIFO
- * buffer is available. This could theoretically be improved to send data if
- * there's enough space in the FIFO, but that level of responsiveness it's
- * not really necessary.
+ * If the transmitter is idle (meaning the buffer is empty) data will be
+ * written to it. If it's not, uart_isr will take care of writing data out
+ * when there's enough space (that's why the IRQ barrier is needed).
+ *
+ * As a side note, the naming stems from the AVR architecture.
  */
 void serial_enable_tx_irq()
 {
-    // @todo 10ms is a bit too much, we should implement some sort of ring buffer
-    uint32_t timeout = 10000;
-    while (!uart_ll_is_tx_idle(UART_DEV)) {
-        if (unlikely(timeout == 0)) {
-            shutdown("TX transaction took too long.");
-            // ReSharper disable once CppDFAUnreachableCode
-            return;
-        }
-        esp_rom_delay_us(1);
-        timeout--;
+    irqstatus_t flag = irq_save();
+    if (uart_ll_is_tx_idle(UART_DEV)) {
+        uart_write_tx();
     }
-
-    uint8_t buffer;
-    while (!serial_get_tx_byte(&buffer)) {
-        uart_ll_write_txfifo(UART_DEV, &buffer, sizeof(buffer));
-    }
+    irq_restore(flag);
 }
