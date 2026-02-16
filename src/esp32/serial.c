@@ -8,8 +8,8 @@
 #include "soc/interrupts.h"
 #include "soc/uart_struct.h"
 
-#define UART_NUM            UART_NUM_2
-#define UART_PERIPH_INTR    ETS_UART2_INTR_SOURCE
+#define UART_NUM            UART_NUM_1
+#define UART_PERIPH_INTR    ETS_UART1_INTR_SOURCE
 #define UART_CPU_INTR       2 // Is not related to the above, see esp_cpu_intr.c
 
 #define UART_DEV            (UART_LL_GET_HW(UART_NUM))
