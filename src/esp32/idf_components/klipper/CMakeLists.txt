@@ -36,6 +36,7 @@ idf_component_register(
         ${KLIPPER_ROOT}/src/pwmcmds.c
         ${KLIPPER_ROOT}/src/sched.c
         ${KLIPPER_ROOT}/src/stepper.c
+        ${KLIPPER_ROOT}/src/tmcuart.c
         ${KLIPPER_ROOT}/src/trsync.c
 
         #    ${KLIPPER_ROOT}/src/i2ccmds.c
@@ -53,7 +54,6 @@ idf_component_register(
         #    ${KLIPPER_ROOT}/src/spicmds.c
         #    ${KLIPPER_ROOT}/src/spi_software.c
         #    ${KLIPPER_ROOT}/src/thermocouple.c
-        #    ${KLIPPER_ROOT}/src/tmcuart.c
     INCLUDE_DIRS
         ${KLIPPER_ROOT}/src
         ${KLIPPER_ROOT}/src/esp32
