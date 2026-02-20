@@ -1,149 +1,145 @@
-# Kconfig settings for ESP32
-
 if MACH_ESPRESSIF_ESP32
-
-config ESP32_SELECT
-    bool
-    default y
-    # @todo: actually implement this on FW
-    select HAVE_GPIO
-    #select HAVE_GPIO_ADC
-    #select HAVE_GPIO_SPI
-    #select HAVE_GPIO_I2C
-    #select HAVE_GPIO_HARD_PWM
-    #select HAVE_CHIPID
-
-config BOARD_DIRECTORY
-    string
-    default "esp32"
-
-choice
-    prompt "Processor model (IDF target)"
-    default MACH_esp32
-    
-	config MACH_esp32
-		bool "esp32"
-	config MACH_esp32s2
-		bool "esp32s2"
-	config MACH_esp32c3
-		bool "esp32c3"
-	config MACH_esp32s3
-		bool "esp32s3"
-	config MACH_esp32c2
-		bool "esp32c2"
-	config MACH_esp32c6
-		bool "esp32c6"
-	config MACH_esp32h2
-		bool "esp32h2"
-	config MACH_esp32p4
-		bool "esp32p4"
-	config MACH_esp32c5
-		bool "esp32c5"
-	config MACH_esp32c61
-		bool "esp32c61"
-	config MACH_esp_linux
-		bool "linux"
-	config MACH_esp32h21
-		bool "esp32h21"
-	config MACH_esp32h4
-	    bool "esp32h4"
-endchoice
-
-config MCU
-    string
-	default "esp32" if MACH_esp32
-	default "esp32s2" if MACH_esp32s2
-	default "esp32c3" if MACH_esp32c3
-	default "esp32s3" if MACH_esp32s3
-	default "esp32c2" if MACH_esp32c2
-	default "esp32c6" if MACH_esp32c6
-	default "esp32h2" if MACH_esp32h2
-	default "esp32p4" if MACH_esp32p4
-	default "esp32c5" if MACH_esp32c5
-	default "esp32c61" if MACH_esp32c61
-	default "linux" if MACH_esp_linux
-	default "esp32h21" if MACH_esp32h21
-	default "esp32h4" if MACH_esp32h4
-
-config CLOCK_FREQ
-    int
-    # Todo: add defaults for other platforms
-    default 240000000 if MACH_esp32
-
-menu "Communication interface (UART0)"
-    config SERIAL # Todo add CDC when the time comes
+    config ESP32_SELECT
         bool
         default y
-    config UART_TX_PIN
-        int "TX pin for UART0 (default: GPIO 1)"
-        range 0 48
-        default 1
-    config UART_RX_PIN
-        int "RX pin for UART0 (default: GPIO 3)"
-        range 0 48
-        default 3
-endmenu
+        # @todo: actually implement this on FW
+        select HAVE_GPIO
+        #select HAVE_GPIO_ADC
+        #select HAVE_GPIO_SPI
+        #select HAVE_GPIO_I2C
+        #select HAVE_GPIO_HARD_PWM
+        #select HAVE_CHIPID
 
-config HAVE_GPIO_SR
-    bool "Enable shift register output (HC595 and similar)"
-    default n
-menu "Shift register output configuration"
-    depends on HAVE_GPIO_SR
-    config SR_BYTE_NO
-        int "Shift register count (8 bits each)"
-        range 1 16
-        default 4
-    config SR_PIN_DATA
-        int "Data pin"
-        range 0 48
-        default 27
-    config SR_PIN_CLK
-        int "Clock pin"
-        range 0 48
-        default 25
-    config SR_PIN_LATCH
-        int "Latch pin"
-        range 0 48
-        default 26
-    config SR_CLOCK_FREQ_MHZ
-        int "Clock frequency (MHz)"
-        range 1 10
-        default 10
-endmenu
+    config BOARD_DIRECTORY
+        string
+        default "esp32"
 
-config ADC_REFERENCE_MV
-    int "ADC voltage reference (default: 3300mV)"
-    range 0 3300
-    default 3300
-    help
-        The ESP32 ADC comes factory-calibrated, but given most temp. circuits
-        are based on a voltage divider and there's no direct access to the
-        internal voltage reference, we need to know both the ADC reference and
-        the external reference in order to measure temperatures accurately.
+    choice
+        prompt "Processor model (IDF target)"
+        default MACH_esp32
 
-        Some boards have zener-based references that vary wildly between
-        batches [1-4], that can can be eventually replaced by a TL431.
+        config MACH_esp32
+            bool "esp32"
+        config MACH_esp32s2
+            bool "esp32s2"
+        config MACH_esp32c3
+            bool "esp32c3"
+        config MACH_esp32s3
+            bool "esp32s3"
+        config MACH_esp32c2
+            bool "esp32c2"
+        config MACH_esp32c6
+            bool "esp32c6"
+        config MACH_esp32h2
+            bool "esp32h2"
+        config MACH_esp32p4
+            bool "esp32p4"
+        config MACH_esp32c5
+            bool "esp32c5"
+        config MACH_esp32c61
+            bool "esp32c61"
+        config MACH_esp_linux
+            bool "linux"
+        config MACH_esp32h21
+            bool "esp32h21"
+        config MACH_esp32h4
+            bool "esp32h4"
+    endchoice
 
-        In all cases, it is best to measure the reference by measuring the
-        voltage across GND and the ADC input. Make sure to *DISCONNECT THE
-        THERMISTOR* when measuring so that there's no load (and no voltage
-        drop) across R1 in the voltage divider.
+    config MCU
+        string
+        default "esp32" if MACH_esp32
+        default "esp32s2" if MACH_esp32s2
+        default "esp32c3" if MACH_esp32c3
+        default "esp32s3" if MACH_esp32s3
+        default "esp32c2" if MACH_esp32c2
+        default "esp32c6" if MACH_esp32c6
+        default "esp32h2" if MACH_esp32h2
+        default "esp32p4" if MACH_esp32p4
+        default "esp32c5" if MACH_esp32c5
+        default "esp32c61" if MACH_esp32c61
+        default "linux" if MACH_esp_linux
+        default "esp32h21" if MACH_esp32h21
+        default "esp32h4" if MACH_esp32h4
 
-        [1] https://github.com/makerbase-mks/MKS-TinyBee/issues/19
-        [2] https://github.com/MarlinFirmware/Marlin/issues/24142
-        [3] https://github.com/MarlinFirmware/Marlin/issues/27434
-        [4] https://github.com/MarlinFirmware/Marlin/pull/27755
+    config CLOCK_FREQ
+        int
+        # Todo: add defaults for other platforms
+        default 240000000 if MACH_esp32
 
-#config ESP_IDF_LOGGING_ENABLE
-#    depends on LOW_LEVEL_OPTIONS
-#    bool "Enable ESP-IDF logging on UART1"
-#    default n
-#menu "ESP-IDF logging configuration"
-#    depends on ESP_IDF_LOGGING_ENABLE
-#    config ESP_IDF_LOGGING_TX_PIN
-#        int "TX pin (default: GPIO 13)"
-#        range 0 48
-#        default 13
-#endmenu
+    menu "Communication interface (UART0)"
+        config SERIAL # Todo add CDC when the time comes
+            bool
+            default y
+        config UART_TX_PIN
+            int "TX pin for UART0 (default: GPIO 1)"
+            range 0 48
+            default 1
+        config UART_RX_PIN
+            int "RX pin for UART0 (default: GPIO 3)"
+            range 0 48
+            default 3
+    endmenu
 
+    config HAVE_GPIO_SR
+        bool "Enable shift register output (HC595 and similar)"
+        default n
+    menu "Shift register output configuration"
+        depends on HAVE_GPIO_SR
+        config SR_BYTE_NO
+            int "Shift register count (8 bits each)"
+            range 1 16
+            default 4
+        config SR_PIN_DATA
+            int "Data pin"
+            range 0 48
+            default 27
+        config SR_PIN_CLK
+            int "Clock pin"
+            range 0 48
+            default 25
+        config SR_PIN_LATCH
+            int "Latch pin"
+            range 0 48
+            default 26
+        config SR_CLOCK_FREQ_MHZ
+            int "Clock frequency (MHz)"
+            range 1 10
+            default 10
+    endmenu
+
+    config ADC_REFERENCE_MV
+        int "ADC voltage reference (default: 3300mV)"
+        range 0 3300
+        default 3300
+        help
+            The ESP32 ADC comes factory-calibrated, but given most temp. circuits
+            are based on a voltage divider and there's no direct access to the
+            internal voltage reference, we need to know both the ADC reference and
+            the external reference in order to measure temperatures accurately.
+
+            Some boards have zener-based references that vary wildly between
+            batches [1-4], that can can be eventually replaced by a TL431.
+
+            In all cases, it is best to measure the reference by measuring the
+            voltage across GND and the ADC input. Make sure to *DISCONNECT THE
+            THERMISTOR* when measuring so that there's no load (and no voltage
+            drop) across R1 in the voltage divider.
+
+            [1] https://github.com/makerbase-mks/MKS-TinyBee/issues/19
+            [2] https://github.com/MarlinFirmware/Marlin/issues/24142
+            [3] https://github.com/MarlinFirmware/Marlin/issues/27434
+            [4] https://github.com/MarlinFirmware/Marlin/pull/27755
+
+    #config ESP_IDF_LOGGING_ENABLE
+    #    depends on LOW_LEVEL_OPTIONS
+    #    bool "Enable ESP-IDF logging on UART1"
+    #    default n
+    #menu "ESP-IDF logging configuration"
+    #    depends on ESP_IDF_LOGGING_ENABLE
+    #    config ESP_IDF_LOGGING_TX_PIN
+    #        int "TX pin (default: GPIO 13)"
+    #        range 0 48
+    #        default 13
+    #endmenu
 endif
