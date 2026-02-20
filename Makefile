@@ -70,7 +70,7 @@ $(OUT)%.ld: %.lds.S $(OUT)autoconf.h
 	@echo "  Preprocessing $@"
 	$(Q)$(CPP) -I$(OUT) -P -MD -MT $@ $< -o $@
 
-ifdef SKIP_KLIPPERELF_RECIPE
+ifndef SKIP_KLIPPERELF_RECIPE
 $(OUT)klipper.elf: $(OBJS_klipper.elf)
 	@echo "  Linking $@"
 	$(CMD_klipper.elf)

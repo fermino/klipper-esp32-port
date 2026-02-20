@@ -28,6 +28,7 @@ $(OUT)CMakeCache.txt: $(OUT)autoconf.h
 espmenuconfig: $(OUT)CMakeCache.txt fix_symlinks $(OUT)autoconf.h src/esp32/sdkconfig.defaults
 	$(Q)$(DOCKER_CMD) ninja -C $(OUT) menuconfig
 
+SKIP_KLIPPERELF_RECIPE := true
 $(OUT)klipper.elf: $(OUT)CMakeCache.txt fix_symlinks $(OUT)autoconf.h $(shell find src/esp32/ -type f)
 	$(Q)$(DOCKER_CMD) ninja -C $(OUT) klipper.elf
 
