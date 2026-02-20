@@ -3,10 +3,12 @@ export ESPPORT=$(FLASH_DEVICE)
 
 ifndef ESP_IDF_VERSION
 	DEVICE_FLAGS=$(if $(ESPPORT), --device "$(ESPPORT):$(ESPPORT)",)
+	# Run as current user to avoid permission issues with the directories
 	DOCKER_CMD := docker run \
 		--interactive \
 		--tty \
 		--rm \
+		--user "$(shell id -u):$(shell id -g)" \
 		--volume "$(PWD)/$(OUT):/$(OUT)" \
 		--volume "$(PWD)/klippy:/klippy" \
 		--volume "$(PWD)/scripts:/scripts" \
