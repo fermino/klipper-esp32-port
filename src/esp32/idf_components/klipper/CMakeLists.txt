@@ -1,73 +1,36 @@
 #[[
     Register klipper as an IDF component (everything except the CTR).
 
-    This is the bread and butter of the project and when adding features
-    you will be likely working here.
+    Sources, include directories and ESP-IDF required components come from
+    Klipper makefiles.
+
+    ESP-IDF components will be included as-needed to reduce build times.
 ]]
 
+# ESPIDF_SOURCES
+if($ENV{ESPIDF_SOURCES} STREQUAL "")
+    message(FATAL_ERROR "ESPIDF_SOURCES must be defined")
+endif()
+string(REPLACE " " ";" ESPIDF_SOURCES "$ENV{ESPIDF_SOURCES}")
+list(TRANSFORM ESPIDF_SOURCES PREPEND "../../../")
+
+# ESPIDF_INCLUDE_DIRS
+if($ENV{ESPIDF_INCLUDE_DIRS} STREQUAL "")
+    message(FATAL_ERROR "ESPIDF_INCLUDE_DIRS must be defined")
+endif()
+string(REPLACE " " ";" ESPIDF_INCLUDE_DIRS "$ENV{ESPIDF_INCLUDE_DIRS}")
+list(TRANSFORM ESPIDF_INCLUDE_DIRS PREPEND "../../../../")
+
+# ESPIDF_COMPONENTS
+if($ENV{ESPIDF_COMPONENTS} STREQUAL "")
+    message(FATAL_ERROR "ESPIDF_COMPONENTS must be defined")
+endif()
+string(REPLACE " " ";" ESPIDF_COMPONENTS "$ENV{ESPIDF_COMPONENTS}")
+
 idf_component_register(
-    SRCS
-        # Core
-        ${KLIPPER_ROOT}/src/esp32/main.c
-        ${KLIPPER_ROOT}/src/esp32/timer.c
-        ${KLIPPER_ROOT}/src/esp32/watchdog.c
-        ${KLIPPER_ROOT}/src/esp32/serial.c
-
-        # Others
-        ${KLIPPER_ROOT}/src/adccmds.c
-        ${KLIPPER_ROOT}/src/basecmd.c
-        ${KLIPPER_ROOT}/src/buttons.c
-        ${KLIPPER_ROOT}/src/command.c
-        ${KLIPPER_ROOT}/src/debugcmds.c
-        ${KLIPPER_ROOT}/src/endstop.c
-        ${KLIPPER_ROOT}/src/esp32/gpio/gpio.c
-        ${KLIPPER_ROOT}/src/esp32/gpio/gpio_adc.c
-        ${KLIPPER_ROOT}/src/esp32/gpio/gpio_adc_cali.c
-        ${KLIPPER_ROOT}/src/esp32/gpio/gpio_in.c
-        ${KLIPPER_ROOT}/src/esp32/gpio/gpio_out.c
-        ${KLIPPER_ROOT}/src/esp32/gpio/gpio_pwm.c
-        ${KLIPPER_ROOT}/src/esp32/gpio/shift_register.c
-        ${KLIPPER_ROOT}/src/generic/alloc.c
-        ${KLIPPER_ROOT}/src/generic/crc16_ccitt.c
-        ${KLIPPER_ROOT}/src/generic/serial_irq.c
-        ${KLIPPER_ROOT}/src/generic/timer_irq.c
-        ${KLIPPER_ROOT}/src/gpiocmds.c
-        ${KLIPPER_ROOT}/src/initial_pins.c
-        ${KLIPPER_ROOT}/src/pwmcmds.c
-        ${KLIPPER_ROOT}/src/sched.c
-        ${KLIPPER_ROOT}/src/stepper.c
-        ${KLIPPER_ROOT}/src/tmcuart.c
-        ${KLIPPER_ROOT}/src/trsync.c
-
-        #    ${KLIPPER_ROOT}/src/i2ccmds.c
-        #    ${KLIPPER_ROOT}/src/i2c_software.c
-        #    ${KLIPPER_ROOT}/src/lcd_hd44780.c
-        #    ${KLIPPER_ROOT}/src/lcd_st7920.c
-        #    ${KLIPPER_ROOT}/src/neopixel.c
-        #    ${KLIPPER_ROOT}/src/pulse_counter.c
-        #    ${KLIPPER_ROOT}/src/sensor_adxl345.c
-        #    ${KLIPPER_ROOT}/src/sensor_angle.c
-        #    ${KLIPPER_ROOT}/src/sensor_bulk.c
-        #    ${KLIPPER_ROOT}/src/sensor_ldc1612.c
-        #    ${KLIPPER_ROOT}/src/sensor_lis2dw.c
-        #    ${KLIPPER_ROOT}/src/sensor_mpu9250.c
-        #    ${KLIPPER_ROOT}/src/spicmds.c
-        #    ${KLIPPER_ROOT}/src/spi_software.c
-        #    ${KLIPPER_ROOT}/src/thermocouple.c
-    INCLUDE_DIRS
-        ${KLIPPER_ROOT}/src
-        ${KLIPPER_ROOT}/src/esp32
-        ${KLIPPER_ROOT}/src/generic
-        ${KLIPPER_ROOT}/out
-
-    # Include the required ESP components here. To reduce build times no
-    # component will be automatically added besides sub-dependencies.
-    PRIV_REQUIRES
-        esp_adc
-        esp_driver_gpio
-        esp_driver_ledc
-        esp_driver_spi
-        esp_driver_uart
+    SRCS ${ESPIDF_SOURCES}
+    INCLUDE_DIRS ${ESPIDF_INCLUDE_DIRS}
+    PRIV_REQUIRES ${ESPIDF_COMPONENTS}
 
     # Map the whole app to IRAM on startup to avoid possible flash cache misses
     # that would introduce jitter. You can verify this by by running

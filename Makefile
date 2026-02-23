@@ -114,7 +114,7 @@ $(OUT)autoconf.h: $(KCONFIG_CONFIG)
 	$(Q)mkdir -p $(OUT)
 	$(Q) KCONFIG_AUTOHEADER=$@ $(PYTHON) lib/kconfiglib/genconfig.py src/Kconfig
 
-$(KCONFIG_CONFIG) olddefconfig: src/Kconfig
+$(KCONFIG_CONFIG) olddefconfig: src/Kconfig src/$(patsubst "%",%,$(CONFIG_BOARD_DIRECTORY))/Kconfig
 	$(Q)$(PYTHON) lib/kconfiglib/olddefconfig.py src/Kconfig
 
 menuconfig:

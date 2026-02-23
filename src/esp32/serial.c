@@ -2,7 +2,7 @@
 #include "autoconf.h"
 #include "command.h"
 #include "esp_err.h"
-#include "serial_irq.h"
+#include "generic/serial_irq.h"
 #include "driver/uart.h"
 #include "hal/uart_ll.h"
 #include "soc/interrupts.h"

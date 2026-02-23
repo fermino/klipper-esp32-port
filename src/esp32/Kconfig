@@ -2,12 +2,11 @@ if MACH_ESPRESSIF_ESP32
     config ESP32_SELECT
         bool
         default y
-        # @todo: actually implement this on FW
         select HAVE_GPIO
-        #select HAVE_GPIO_ADC
+        select HAVE_GPIO_ADC
         #select HAVE_GPIO_SPI
         #select HAVE_GPIO_I2C
-        #select HAVE_GPIO_HARD_PWM
+        select HAVE_GPIO_HARD_PWM
         #select HAVE_CHIPID
 
     config BOARD_DIRECTORY
