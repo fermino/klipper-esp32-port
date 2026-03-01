@@ -9,15 +9,10 @@ ifndef ESP_IDF_VERSION
 		--tty \
 		--rm \
 		--user "$(shell id -u):$(shell id -g)" \
-		--volume "$(PWD)/$(OUT):/$(OUT)" \
-		--volume "$(PWD)/klippy:/klippy" \
-		--volume "$(PWD)/scripts:/scripts" \
-		--volume "$(PWD)/src:/src" \
+		--volume "$(PWD):/klipper" \
+		--workdir "/klipper" \
 		--env ESPPORT \
 		--env IDF_TARGET \
-		--env ESPIDF_SOURCES \
-		--env ESPIDF_INCLUDE_DIRS \
-		--env ESPIDF_COMPONENTS \
 		$(DEVICE_FLAGS) \
 		espressif/idf:release-v5.5
 endif
@@ -40,20 +35,15 @@ src-$(CONFIG_WANT_ADC) += esp32/gpio/gpio_adc.c
 src-$(CONFIG_WANT_ADC) += esp32/gpio/gpio_adc_cali.c
 src-$(CONFIG_WANT_HARD_PWM) += esp32/gpio/gpio_pwm.c
 
-export ESPIDF_SOURCES=$(src-y)
-
 ESPIDF_INCLUDE_DIRS += out
 ESPIDF_INCLUDE_DIRS += src
 ESPIDF_INCLUDE_DIRS += src/esp32
-
-export ESPIDF_INCLUDE_DIRS
 
 ESPIDF_COMPONENTS += esp_adc
 ESPIDF_COMPONENTS += esp_driver_gpio
 ESPIDF_COMPONENTS += esp_driver_ledc
 ESPIDF_COMPONENTS += esp_driver_spi
 ESPIDF_COMPONENTS += esp_driver_uart
-export ESPIDF_COMPONENTS
 
 # Absolute links break inside docker
 fix_symlinks: create-board-link
@@ -73,3 +63,11 @@ $(OUT)klipper.elf: $(OUT)CMakeCache.txt fix_symlinks $(OUT)autoconf.h $(shell fi
 flash: $(OUT)klipper.elf
 	$(Q)if [ -z $(FLASH_DEVICE) ]; then echo "Please specify FLASH_DEVICE"; exit 1; fi
 	$(Q)$(DOCKER_CMD) ninja -C $(OUT) flash
+
+# For dev
+env_for_cmake: $(OUT)autoconf.h
+	$(Q)echo "__ENV_START__"
+	$(Q)echo "ESPIDF_SOURCES='$(src-y)'"
+	$(Q)echo "ESPIDF_INCLUDE_DIRS='$(ESPIDF_INCLUDE_DIRS)'"
+	$(Q)echo "ESPIDF_COMPONENTS='$(ESPIDF_COMPONENTS)'"
+	$(Q)echo "__ENV_END__"

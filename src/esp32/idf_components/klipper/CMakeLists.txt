@@ -6,26 +6,38 @@
 
     ESP-IDF components will be included as-needed to reduce build times.
 ]]
+execute_process(
+    WORKING_DIRECTORY "${PROJECT_DIR}/../.."
+    COMMAND make env_for_cmake
+    COMMAND grep -A9 ^__ENV_START__
+    COMMAND grep -B9 ^__ENV_END__
+    COMMAND grep -v -e ^__ENV_START__ -e ^__ENV_END__
+    COMMAND_ERROR_IS_FATAL ANY
+    OUTPUT_VARIABLE ENV_FROM_MAKE
+)
 
-# ESPIDF_SOURCES
-if($ENV{ESPIDF_SOURCES} STREQUAL "")
+string(REPLACE "\n" ";" ENV_FROM_MAKE "${ENV_FROM_MAKE}")
+foreach (VAR ${ENV_FROM_MAKE})
+    string(REPLACE "="  ";" VAR "${VAR}")
+    list(GET VAR 0 KEY)
+    list(GET VAR 1 VALUE)
+    string(REPLACE "'" "" VALUE "${VALUE}")
+    string(REPLACE " " ";" VALUE "${VALUE}")
+    set("${KEY}" "${VALUE}")
+endforeach ()
+
+if("${ESPIDF_SOURCES}" STREQUAL "")
     message(FATAL_ERROR "ESPIDF_SOURCES must be defined")
 endif()
-string(REPLACE " " ";" ESPIDF_SOURCES "$ENV{ESPIDF_SOURCES}")
-list(TRANSFORM ESPIDF_SOURCES PREPEND "../../../")
-
-# ESPIDF_INCLUDE_DIRS
-if($ENV{ESPIDF_INCLUDE_DIRS} STREQUAL "")
+if("${ESPIDF_INCLUDE_DIRS}" STREQUAL "")
     message(FATAL_ERROR "ESPIDF_INCLUDE_DIRS must be defined")
 endif()
-string(REPLACE " " ";" ESPIDF_INCLUDE_DIRS "$ENV{ESPIDF_INCLUDE_DIRS}")
-list(TRANSFORM ESPIDF_INCLUDE_DIRS PREPEND "../../../../")
-
-# ESPIDF_COMPONENTS
-if($ENV{ESPIDF_COMPONENTS} STREQUAL "")
+if("${ESPIDF_COMPONENTS}" STREQUAL "")
     message(FATAL_ERROR "ESPIDF_COMPONENTS must be defined")
 endif()
-string(REPLACE " " ";" ESPIDF_COMPONENTS "$ENV{ESPIDF_COMPONENTS}")
+
+list(TRANSFORM ESPIDF_SOURCES PREPEND "../../../")
+list(TRANSFORM ESPIDF_INCLUDE_DIRS PREPEND "../../../../")
 
 idf_component_register(
     SRCS ${ESPIDF_SOURCES}
