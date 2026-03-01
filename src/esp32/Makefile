@@ -1,3 +1,42 @@
+# ESP32 Makefile
+#
+# If ESP-IDF is not detected in the current environment, the official
+# espressif's docker image will be used instead.
+#
+# Source files, include directories and ESP-IDF components are passed to cmake
+# as environment variables so that all relevant configuration is managed
+# through the usual klipper build process, yet the project can be built
+# directly with the usual esp-idf tools (and properly integrated with IDEs).
+#
+# The two exception are:
+#  1. CTR: those are generated and built inside the "main" esp-idf component.
+#  2. ldfragments: noflash configuration.
+
+src-y						+=	esp32/main.c \
+								esp32/timer.c \
+								esp32/watchdog.c \
+								generic/alloc.c \
+								generic/crc16_ccitt.c \
+								generic/timer_irq.c
+src-$(CONFIG_SERIAL)		+=	esp32/serial.c \
+								generic/serial_irq.c
+src-$(CONFIG_HAVE_GPIO) 	+=	esp32/gpio/gpio.c \
+								esp32/gpio/gpio_in.c \
+								esp32/gpio/gpio_out.c \
+								esp32/gpio/shift_register.c # Todo: move to a separated feature
+src-$(CONFIG_WANT_ADC) 		+=	esp32/gpio/gpio_adc.c \
+							    esp32/gpio/gpio_adc_cali.c
+src-$(CONFIG_WANT_HARD_PWM) +=  esp32/gpio/gpio_pwm.c
+
+ESPIDF_INCLUDE_DIRS	:=	out \
+						src \
+						src/esp32
+ESPIDF_COMPONENTS	:=	esp_adc \
+						esp_driver_gpio \
+						esp_driver_ledc \
+						esp_driver_spi \
+						esp_driver_uart
+
 export IDF_TARGET=$(patsubst "%",%,$(CONFIG_MCU))
 export ESPPORT=$(FLASH_DEVICE)
 
@@ -16,34 +55,6 @@ ifndef ESP_IDF_VERSION
 		$(DEVICE_FLAGS) \
 		espressif/idf:release-v5.5
 endif
-
-# Core
-src-y += esp32/main.c
-src-y += esp32/timer.c
-src-y += esp32/watchdog.c
-src-y += generic/alloc.c
-src-y += generic/crc16_ccitt.c
-src-y += generic/timer_irq.c
-# Features
-src-$(CONFIG_SERIAL) += esp32/serial.c
-src-$(CONFIG_SERIAL) += generic/serial_irq.c
-src-$(CONFIG_HAVE_GPIO) += esp32/gpio/gpio.c
-src-$(CONFIG_HAVE_GPIO) += esp32/gpio/gpio_in.c
-src-$(CONFIG_HAVE_GPIO) += esp32/gpio/gpio_out.c
-src-$(CONFIG_HAVE_GPIO) += esp32/gpio/shift_register.c # Todo: move to a separated feature
-src-$(CONFIG_WANT_ADC) += esp32/gpio/gpio_adc.c
-src-$(CONFIG_WANT_ADC) += esp32/gpio/gpio_adc_cali.c
-src-$(CONFIG_WANT_HARD_PWM) += esp32/gpio/gpio_pwm.c
-
-ESPIDF_INCLUDE_DIRS += out
-ESPIDF_INCLUDE_DIRS += src
-ESPIDF_INCLUDE_DIRS += src/esp32
-
-ESPIDF_COMPONENTS += esp_adc
-ESPIDF_COMPONENTS += esp_driver_gpio
-ESPIDF_COMPONENTS += esp_driver_ledc
-ESPIDF_COMPONENTS += esp_driver_spi
-ESPIDF_COMPONENTS += esp_driver_uart
 
 # Absolute links break inside docker
 fix_symlinks: create-board-link
