@@ -27,6 +27,7 @@ src-$(CONFIG_HAVE_GPIO) 	+=	esp32/gpio/gpio.c \
 src-$(CONFIG_WANT_ADC) 		+=	esp32/gpio/gpio_adc.c \
 							    esp32/gpio/gpio_adc_cali.c
 src-$(CONFIG_WANT_HARD_PWM) +=  esp32/gpio/gpio_pwm.c
+src-$(CONFIG_WANT_SPI)		+=	esp32/gpio/gpio_spi.c
 
 ESPIDF_INCLUDE_DIRS	:=	out \
 						src \
