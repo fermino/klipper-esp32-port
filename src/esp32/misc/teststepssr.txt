@@ -1,0 +1,12 @@
+allocate_oids count=1
+config_stepper oid=0 step_pin=SR1 dir_pin=SR2 invert_step=0 step_pulse_ticks=32
+finalize_config crc=0
+
+SET start_clock {clock+freq}
+SET ticks 3400
+
+reset_step_clock oid=0 clock={start_clock}
+set_next_step_dir oid=0 dir=0
+queue_step oid=0 interval={ticks} count=6000000 add=0
+set_next_step_dir oid=0 dir=1
+queue_step oid=0 interval=3000 count=1 add=0
