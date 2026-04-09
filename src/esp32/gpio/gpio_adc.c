@@ -170,11 +170,17 @@ uint16_t gpio_adc_read(struct gpio_adc gpio)
 
     running_conversion_pin = -1;
 
-    return adc_cali_map(
+    uint16_t result = adc_cali_map(
         gpio.adc_unit,
         gpio.adc_channel,
         adc_oneshot_ll_get_raw_result(gpio.adc_unit)
     );
+
+    if (result > CONFIG_ADC_REFERENCE_MV) {
+        shutdown("ADC: out of range or uncalibrated. Check and try increasing CONFIG_ADC_REFERENCE_MV (it might be slightly off)!");
+    }
+
+    return result;
 }
 
 /**
