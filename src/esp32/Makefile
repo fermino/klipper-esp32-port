@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-only
+
 # ESP32 Makefile
 #
 # If ESP-IDF is not detected in the current environment, the official

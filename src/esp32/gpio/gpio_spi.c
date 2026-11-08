@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-only
+
 #include "gpio_spi.h"
 
 struct spi_config spi_setup(uint32_t bus, uint8_t mode, uint32_t rate)
