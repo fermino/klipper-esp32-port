@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-only
+
 #include "gpio/gpio_adc.h"
 #include "gpio/gpio_adc_cali.h"
 #include "autoconf.h"

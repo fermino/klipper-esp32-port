@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-only
+
 #[[
     Main component. Takes care of generating compile_time_request.c and linking
     the whole project into the final binary. See the main CMakeLists.txt for

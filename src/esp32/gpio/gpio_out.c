@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-only
+
 #include "gpio/gpio_out.h"
 #include "gpio/shift_register.h"
 #include "command.h"
